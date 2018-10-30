@@ -5,14 +5,16 @@ module Model where
 data InfoToShow = ShowNothing
                 | ShowANumber Int
                 | ShowAChar   Char
+                | ShowCircle  Float
 
 nO_SECS_BETWEEN_CYCLES :: Float
-nO_SECS_BETWEEN_CYCLES = 5
+nO_SECS_BETWEEN_CYCLES = 0.05
 
 data GameState = GameState {
                    infoToShow  :: InfoToShow
                  , elapsedTime :: Float
+                 , position    :: Float
                  }
 
 initialState :: GameState
-initialState = GameState ShowNothing 0
+initialState = GameState (ShowCircle 0) 0 5
