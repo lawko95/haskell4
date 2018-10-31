@@ -14,7 +14,8 @@ data GameState = GameState {
                    infoToShow  :: InfoToShow
                  , elapsedTime :: Float
                  , position    :: Float
+                 , hormove     :: Float
                  }
 
 initialState :: GameState
-initialState = GameState (ShowCircle 0) 0 5
+initialState = GameState (ShowCircle 0) 0 5 0
