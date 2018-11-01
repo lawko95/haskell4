@@ -12,15 +12,16 @@ import System.Random
 step :: Float -> GameState -> IO GameState
 step secs gstate
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
-    = return $ GameState (ShowCircle (position gstate + hormove gstate)) 0 (position gstate + hormove gstate) (hormove gstate)
-
+    = return $ GameState (ShowCircle (fst (position gstate) + hormove gstate) (snd (position gstate) + vertmove gstate)) 0 ((fst (position gstate) + hormove gstate), snd (position gstate) + vertmove gstate) (hormove gstate) vertspeed
     --  = -- We show a new random number
     --    do randomNumber <- randomIO
     --       let newNumber = abs randomNumber `mod` 10
     --       return $ GameState (ShowANumber newNumber) 0
    | otherwise
     = -- Just update the elapsed time
-      return $ gstate {elapsedTime = elapsedTime gstate + secs}
+      return $ gstate {elapsedTime = elapsedTime gstate + secs, vertmove = vertspeed}
+        where vertspeed | snd (position gstate) < 5 = 0 
+                        | otherwise = (vertmove gstate) - 1
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
@@ -35,4 +36,6 @@ inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate
   = gstate {hormove = -10}
 inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate
   = gstate {hormove = 0}
+inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate
+  | snd (position gstate) < 5 = gstate {vertmove = 100}
 inputKey _ gstate = gstate -- Otherwise keep the same
