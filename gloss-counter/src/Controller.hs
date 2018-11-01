@@ -19,9 +19,9 @@ step secs gstate
     --       return $ GameState (ShowANumber newNumber) 0
    | otherwise
     = -- Just update the elapsed time
-      return $ gstate {elapsedTime = elapsedTime gstate + secs, vertmove = vertspeed}
+      return $ gstate {elapsedTime = elapsedTime gstate + secs}
         where vertspeed | snd (position gstate) < 5 = 0 
-                        | otherwise = (vertmove gstate) - 1
+                        | otherwise = -10
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
