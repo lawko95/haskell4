@@ -11,15 +11,17 @@ import System.Random
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate
+   | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory}
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
     = return $ GameState (ShowWorld (position (player (updateMarioPosition gstate))))
                          0 
                          (Player ((position (player (updateMarioPosition gstate)))) (hormove (player gstate)) vertspeed)
                          (blocks gstate) 
                          (enemies (updateMarioPosition gstate))
+                         (endFlag gstate)
    | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs} -- Just update the elapsed time
-        where vertspeed | collisionMarioAnyBlock (player gstate) (blocks gstate) = 0 -- if there is colision between mario and blocks then become 0
-                        | otherwise = -10 --
+        where vertspeed | collisionMarioAnyBlock (player gstate) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
+                        | otherwise = -10 --otherwise mario should be falling until he hits a block or falls off the level
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy
 updateEnemyPosition e@(Enemy (x,y) h v) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) --check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
@@ -39,22 +41,25 @@ collisionEnemyBlock (Enemy (x,y) _ _) (Block u v) |    x + enemyWidth / 1.5  > u
 collisionEnemyAnyBlock :: Enemy -> [Block] -> Bool
 collisionEnemyAnyBlock e = or . map (collisionEnemyBlock e)
 
+collisionMarioSquare :: Player -> Float -> Float -> Float -> Float -> Bool
+collisionMarioSquare (Player (x,y) _ _) u v w h |    x + playerRadius > u - w / 2
+                                                  && x - playerRadius < u + w / 2 
+                                                  && y + playerRadius > v - h / 2
+                                                  && y - playerRadius < v + h / 2 = True
+                                                | otherwise = False
+
+
+collisionMarioEndFlag :: Player -> EndFlag -> Bool
+collisionMarioEndFlag p (EndFlag (u,v)) = collisionMarioSquare p u v endFlagWidth endFlagHeight
+
 collisionMarioBlock :: Player -> Block -> Bool
-collisionMarioBlock (Player (x,y) _ _) (Block u v) |    x + playerRadius > u - blockWidth / 2
-                                                     && x - playerRadius < u + blockWidth / 2 
-                                                     && y + playerRadius > v - blockHeight / 2
-                                                     && y - playerRadius < v + blockHeight / 2 = True
-                                                   | otherwise = False
+collisionMarioBlock p (Block u v) = collisionMarioSquare p u v blockWidth blockHeight
 
 collisionMarioAnyBlock :: Player -> [Block] -> Bool
 collisionMarioAnyBlock p = or . map (collisionMarioBlock p)
 
 collisionMarioEnemy :: Player -> Enemy -> Bool
-collisionMarioEnemy (Player (x,y) _ _) (Enemy (u,v) _ _) |   x + playerRadius > u - enemyWidth / 2
-                                                          && x - playerRadius < u + enemyWidth / 2 
-                                                          && y + playerRadius > v - enemyHeight / 2
-                                                          && y - playerRadius < v + enemyHeight / 2 = True
-                                                         | otherwise = False
+collisionMarioEnemy p (Enemy (u,v) _ _) = collisionMarioSquare p u v enemyWidth enemyHeight
 
 collisionMarioAnyEnemy :: Player -> [Enemy] -> Bool
 collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)

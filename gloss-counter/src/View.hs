@@ -10,8 +10,14 @@ view = return . viewPure
 
 viewPure :: GameState -> Picture
 viewPure gstate = case infoToShow gstate of
-  ShowWorld (h,v) -> pictures [pictures $ blocksToPictures level1Blocks, pictures $ enemiesToPictures (enemies gstate), translate h v (color black (circleSolid playerRadius))]
+  ShowWorld (h,v) -> pictures [pictures $ blocksToPictures level1Blocks
+                              , pictures $ enemiesToPictures (enemies gstate)
+                              , pictures $ endFlagToPicture (endFlag gstate)
+                              , translate h v (color black (circleSolid playerRadius))]
+  ShowVictory -> translate (-440) 0 $ Text "Congratulations"
 
+endFlagToPicture :: EndFlag -> [Picture]
+endFlagToPicture (EndFlag (x,y)) = [translate x y $ color black $ rectangleSolid endFlagWidth endFlagHeight, translate x y $ color white $ rectangleWire endFlagWidth endFlagHeight]
 
 enemiesToPictures :: [Enemy] -> [Picture]
 enemiesToPictures = map (\(Enemy (x,y) _ _) -> translate x y $ color red $ rectangleSolid enemyWidth enemyHeight)
