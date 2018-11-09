@@ -11,17 +11,18 @@ import System.Random
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate
-   | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory}
+   | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory} --laat de victory message zien als mario de endflag raakt
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
-    = return $ GameState (ShowWorld (position (player (updateMarioPosition gstate))))
+    = return $ GameState (ShowWorld newPosition)
                          0 
-                         (Player ((position (player (updateMarioPosition gstate)))) (hormove (player gstate)) vertspeed)
+                         (Player ((newPosition)) (hormove (player gstate)) vertspeed)
                          (blocks gstate) 
                          (enemies (updateMarioPosition gstate))
                          (endFlag gstate)
    | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs} -- Just update the elapsed time
-        where vertspeed | collisionMarioAnyBlock (player gstate) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
-                        | otherwise = -10 --otherwise mario should be falling until he hits a block or falls off the level
+        where vertspeed | collisionMarioAnyBlock (player (updateMarioPosition gstate)) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
+                        | otherwise = vertmove (player gstate) -9 --otherwise mario should be falling until he hits a block or falls off the level
+              newPosition = position (player (updateMarioPosition gstate))
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy
 updateEnemyPosition e@(Enemy (x,y) h v) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) --check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
@@ -76,13 +77,13 @@ input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
 inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate@GameState{player = p}
-  = gstate {player = p {hormove = 10}}
+  = gstate {player = p {hormove = 20}}
 inputKey (EventKey (SpecialKey KeyRight) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate@GameState{player = p}
-  = gstate {player = p {hormove = -10}}
+  = gstate {player = p {hormove = -20}}
 inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate@GameState{player = p}
-  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 100}} --must become if there is colision between mario and blocks then become 0
+  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 54}} --must become if there is colision between mario and blocks then become 0
 inputKey _ gstate = gstate -- Otherwise keep the same
