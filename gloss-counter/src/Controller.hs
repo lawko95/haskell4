@@ -12,17 +12,58 @@ import System.Random
 step :: Float -> GameState -> IO GameState
 step secs gstate
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
-    = return $ GameState (ShowCircle (fst (position (player gstate)) + hormove (player gstate)) (snd (position (player gstate)) + vertmove (player gstate))) 0 
-      (Player ((fst (position (player gstate)) + hormove (player gstate)), snd (position (player gstate)) + vertmove (player gstate)) (hormove (player gstate)) vertspeed) (blocks gstate)
-    --  = -- We show a new random number
-    --    do randomNumber <- randomIO
-    --       let newNumber = abs randomNumber `mod` 10
-    --       return $ GameState (ShowANumber newNumber) 0
-   | otherwise
-    = -- Just update the elapsed time
-      return $ gstate {elapsedTime = elapsedTime gstate + secs}
-        where vertspeed | snd (position (player gstate)) < 5 = 0 
-                        | otherwise = -10
+    = return $ GameState (ShowWorld (position (player (updateMarioPosition gstate))))
+                         0 
+                         (Player ((position (player (updateMarioPosition gstate)))) (hormove (player gstate)) vertspeed)
+                         (blocks gstate) 
+                         (enemies (updateMarioPosition gstate))
+   | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs} -- Just update the elapsed time
+        where vertspeed | collisionMarioAnyBlock (player gstate) (blocks gstate) = 0 -- if there is colision between mario and blocks then become 0
+                        | otherwise = -10 --
+
+updateEnemyPosition :: Enemy -> [Block] -> Enemy
+updateEnemyPosition e@(Enemy (x,y) h v) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) --check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
+                                           | otherwise = Enemy (x + h, y + v) h 0 --als de enemy collide met blocks willen we de vertical speed op 0
+
+updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy]
+updateEnemyPositions [] _ = []
+updateEnemyPositions (e:es) bs = updateEnemyPosition e bs : updateEnemyPositions es bs
+
+collisionEnemyBlock :: Enemy -> Block -> Bool
+collisionEnemyBlock (Enemy (x,y) _ _) (Block u v) |    x + enemyWidth / 1.5  > u - blockWidth / 2
+                                                    && x - enemyWidth / 1.5  < u + blockWidth / 2
+                                                    && y + enemyHeight / 1.5 > v - blockHeight / 2
+                                                    && y - enemyHeight / 1.5 < v + blockHeight / 2 = True
+                                                  | otherwise = False
+
+collisionEnemyAnyBlock :: Enemy -> [Block] -> Bool
+collisionEnemyAnyBlock e = or . map (collisionEnemyBlock e)
+
+collisionMarioBlock :: Player -> Block -> Bool
+collisionMarioBlock (Player (x,y) _ _) (Block u v) |    x + playerRadius > u - blockWidth / 2
+                                                     && x - playerRadius < u + blockWidth / 2 
+                                                     && y + playerRadius > v - blockHeight / 2
+                                                     && y - playerRadius < v + blockHeight / 2 = True
+                                                   | otherwise = False
+
+collisionMarioAnyBlock :: Player -> [Block] -> Bool
+collisionMarioAnyBlock p = or . map (collisionMarioBlock p)
+
+collisionMarioEnemy :: Player -> Enemy -> Bool
+collisionMarioEnemy (Player (x,y) _ _) (Enemy (u,v) _ _) |   x + playerRadius > u - enemyWidth / 2
+                                                          && x - playerRadius < u + enemyWidth / 2 
+                                                          && y + playerRadius > v - enemyHeight / 2
+                                                          && y - playerRadius < v + enemyHeight / 2 = True
+                                                         | otherwise = False
+
+collisionMarioAnyEnemy :: Player -> [Enemy] -> Bool
+collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)
+
+updateMarioPosition :: GameState -> GameState
+updateMarioPosition gstate@GameState{player = p, enemies = e} 
+    | collisionMarioAnyEnemy p e =  gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario collide met een enemy reset dan mario's positie en van alle enemies
+    | snd (position (p)) < (-200) = gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario uit het land is gevallen reset dan mario's positie en alle enemies
+    | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyPositions (enemies gstate) (blocks gstate)} --update mario's positie en alle enemies 1 step
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
@@ -38,5 +79,5 @@ inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate@GameState{player = p}
 inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate@GameState{player = p}
-  | snd (position (player gstate)) < 5 = gstate {player = p {vertmove = 100}}
+  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 100}} --must become if there is colision between mario and blocks then become 0
 inputKey _ gstate = gstate -- Otherwise keep the same
