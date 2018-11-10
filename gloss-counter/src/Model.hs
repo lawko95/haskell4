@@ -19,31 +19,32 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-400),0) 0 0) level1Blocks level1Enemies level1EndFlag running 1000
+initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0) level1Blocks level1Enemies level1EndFlag running 1000
 
 data Player = Player {
                 position :: (Float, Float) 
               , hormove  :: Float
               , vertmove :: Float
               }  
-playerRadius = 30 :: Float
+playerRadius = 20 :: Float
 
 data Enemy = Enemy {
                 eposition :: (Float, Float)
               , ehormove  :: Float
               , evertmove :: Float
+              , alive     :: Bool
 }
 enemyWidth  = 35 :: Float
 enemyHeight = 35 :: Float
 
 level1Enemies :: [Enemy]
-level1Enemies = [Enemy (100,60) 3 0, Enemy ((-200),30) 2 0, Enemy (300,0) (-6) 0]
+level1Enemies = [Enemy (100,60) 3 0 False, Enemy ((-200),30) 2 0 True, Enemy (300,0) (-6) 0 True]
 
 data EndFlag = EndFlag { flagPosition :: (Float, Float) }
-endFlagWidth  = 40 :: Float
-endFlagHeight = 40 :: Float
+endFlagWidth  = 20 :: Float
+endFlagHeight = 20 :: Float
 
-level1EndFlag = EndFlag (100, 50)
+level1EndFlag = EndFlag (725, 50)
 
 data Block = Block Float Float
 blockWidth  = 50 :: Float
@@ -54,6 +55,17 @@ data Pause = Paused | Running
 running = Running :: Pause
 
 level1Blocks :: [Block]
-level1Blocks =  [Block (-450) (-70), Block (-400) (-70), Block (-350) (-70), Block (-300) (-70)--, Block (-250) (-100), Block (-200) (-100)
-                , Block (-150) (-100), Block (-100) (-100), Block (-50) (-100), Block 0 (-100), Block 50 (-100), Block 100 (-100)
-                , Block 150 (-100), Block 200 (-100), Block 250 (-100), Block 300 (-100), Block 350 (-100), Block 400 (-100), Block 450 (-100)]
+level1Blocks =  [ Block (-550) (-120), Block (-450) (-120), Block (-400) (-120), Block (-350) (-120), Block (-400) (-40), Block (-200) (-165), Block (-200) (-130), Block (-200) (-95)
+                , Block (-50) (-165), Block (-50) (-130), Block (-50) (-95), Block (-50) (-60)
+                , Block (200) (-165), Block (200) (-130), Block (200) (-95), Block (200) (-60)
+                , Block (-750) (-200), Block (-700) (-200), Block (-650) (-200), Block (-600) (-200), Block (-550) (-200), Block (-500) (-200), Block (-450) (-200)
+                , Block (-400) (-200), Block (-350) (-200), Block (-300) (-200), Block (-250) (-200), Block (-200) (-200), Block (-150) (-200)
+                , Block (-100) (-200), Block (-50) (-200), Block 200 (-200)
+                , Block 250 (-200), Block 300 (-200), Block 250 (-200), Block 300 (-200), Block 250 (-200), Block 300 (-200), Block 350 (-200), Block 400 (-200)
+                , Block 450 (-200), Block 500 (-200), Block 550 (-200), Block 600 (-200), Block 650 (-200), Block 700 (-200), Block 750 (-200)
+                , Block (650) (-165), Block (650) (-130), Block (650) (-95), Block (650) (-60), Block (650) (-25)
+                , Block (600) (-165), Block (600) (-130), Block (600) (-95), Block (600) (-60)
+                , Block (550) (-165), Block (550) (-130), Block (550) (-95)
+                , Block (500) (-165), Block (500) (-130)
+                , Block (450) (-165)]
+ 

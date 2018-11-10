@@ -24,19 +24,19 @@ step secs gstate
                          (score gstate)
    | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs, score = score gstate - 1} -- Just update the elapsed time
         where vertspeed | collisionMarioAnyBlock (player (updateMarioPosition gstate)) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
-                        | otherwise = vertmove (player gstate) -1 --otherwise mario should be falling until he hits a block or falls off the level
+                        | otherwise = vertmove (player gstate) -3 --otherwise mario should be falling until he hits a block or falls off the level
               newPosition = position (player (updateMarioPosition gstate))
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy
-updateEnemyPosition e@(Enemy (x,y) h v) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) --check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
-                                           | otherwise = Enemy (x + h, y + v) h 0 --als de enemy collide met blocks willen we de vertical speed op 0
+updateEnemyPosition e@(Enemy (x,y) h v _) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) True--check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
+                                           | otherwise = Enemy (x + h, y + v) h 0 True--als de enemy collide met blocks willen we de vertical speed op 0
 
 updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy]
 updateEnemyPositions [] _ = []
 updateEnemyPositions (e:es) bs = updateEnemyPosition e bs : updateEnemyPositions es bs
 
 collisionEnemyBlock :: Enemy -> Block -> Bool
-collisionEnemyBlock (Enemy (x,y) _ _) (Block u v) |    x + enemyWidth / 1.5  > u - blockWidth / 2
+collisionEnemyBlock (Enemy (x,y) _ _ _) (Block u v) |    x + enemyWidth / 1.5  > u - blockWidth / 2
                                                     && x - enemyWidth / 1.5  < u + blockWidth / 2
                                                     && y + enemyHeight / 1.5 > v - blockHeight / 2
                                                     && y - enemyHeight / 1.5 < v + blockHeight / 2 = True
@@ -65,13 +65,15 @@ collisionMarioAnyBlock :: Player -> [Block] -> Bool
 collisionMarioAnyBlock p = or . map (collisionMarioBlock p)
 
 collisionMarioEnemy :: Player -> Enemy -> Bool
-collisionMarioEnemy p (Enemy (u,v) _ _) = collisionMarioSquare p u v enemyWidth enemyHeight
+collisionMarioEnemy p (Enemy (u,v) _ _ _) = collisionMarioSquare p u v enemyWidth enemyHeight
+
 
 collisionMarioAnyEnemy :: Player -> [Enemy] -> Bool
-collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)
+collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)                                        
 
 updateMarioPosition :: GameState -> GameState
 updateMarioPosition gstate@GameState{player = p, enemies = e} 
+   -- | collisionMarioAnyEnemy p e && snd (position (p)) > snd (position (e)) = 
     | collisionMarioAnyEnemy p e =  gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario collide met een enemy reset dan mario's positie en van alle enemies
     | snd (position (p)) < (-200) = gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario uit het land is gevallen reset dan mario's positie en alle enemies
     | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyPositions (enemies gstate) (blocks gstate)} --update mario's positie en alle enemies 1 step
@@ -90,7 +92,7 @@ inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate@GameState{player = p}
 inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate@GameState{player = p}
-  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 10}} --must become if there is colision between mario and blocks then become 0
+  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 22}} --must become if there is colision between mario and blocks then become 0
 inputKey (EventKey (Char 'p') Down _ _) gstate -- Dit handelt de pauze af
   | (pause gstate) == Running = gstate {pause = Paused}
   | otherwise = gstate {pause = Running}

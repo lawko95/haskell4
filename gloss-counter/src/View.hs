@@ -21,7 +21,7 @@ endFlagToPicture :: EndFlag -> [Picture]
 endFlagToPicture (EndFlag (x,y)) = [translate x y $ color black $ rectangleSolid endFlagWidth endFlagHeight, translate x y $ color white $ rectangleWire endFlagWidth endFlagHeight]
 
 enemiesToPictures :: [Enemy] -> [Picture]
-enemiesToPictures = map (\(Enemy (x,y) _ _) -> translate x y $ color red $ rectangleSolid enemyWidth enemyHeight)
+enemiesToPictures = map (\(Enemy (x,y) _ _ _) -> translate x y $ color red $ rectangleSolid enemyWidth enemyHeight)
 
 blocksToPictures :: [Block] -> [Picture]
 blocksToPictures = map (\(Block x y) -> translate x y $ color orange $ rectangleSolid blockWidth blockHeight)
