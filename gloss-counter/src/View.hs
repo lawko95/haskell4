@@ -14,7 +14,7 @@ viewPure gstate = case infoToShow gstate of
                               , pictures $ enemiesToPictures (enemies gstate)
                               , pictures $ endFlagToPicture (endFlag gstate)
                               , translate h v (color black (circleSolid playerRadius))]
-  ShowVictory -> translate (-440) 0 $ Text "Congratulations"
+  ShowVictory -> translate (-440) 0 $ Text ("Score: " ++ (show (score gstate)))
   ShowPause -> translate (-440) 0 $ Text "Game paused"
 
 endFlagToPicture :: EndFlag -> [Picture]

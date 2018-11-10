@@ -14,16 +14,17 @@ step secs gstate
    | (pause gstate) == Paused = return $ gstate {infoToShow = ShowPause} -- Als de game op pauze staat laat dan alleen het pauzescherm zien en bereken niets
    | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory} --laat de victory message zien als mario de endflag raakt
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
-    = return $ GameState (ShowWorld newPosition)
+     = return $ GameState (ShowWorld newPosition)
                          0 
                          (Player ((newPosition)) (hormove (player gstate)) vertspeed)
                          (blocks gstate) 
                          (enemies (updateMarioPosition gstate))
                          (endFlag gstate)
                          (pause gstate)
-   | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs} -- Just update the elapsed time
+                         (score gstate)
+   | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs, score = score gstate - 1} -- Just update the elapsed time
         where vertspeed | collisionMarioAnyBlock (player (updateMarioPosition gstate)) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
-                        | otherwise = vertmove (player gstate) -9 --otherwise mario should be falling until he hits a block or falls off the level
+                        | otherwise = vertmove (player gstate) -1 --otherwise mario should be falling until he hits a block or falls off the level
               newPosition = position (player (updateMarioPosition gstate))
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy
@@ -45,11 +46,13 @@ collisionEnemyAnyBlock :: Enemy -> [Block] -> Bool
 collisionEnemyAnyBlock e = or . map (collisionEnemyBlock e)
 
 collisionMarioSquare :: Player -> Float -> Float -> Float -> Float -> Bool
-collisionMarioSquare (Player (x,y) _ _) u v w h |    x + playerRadius > u - w / 2
-                                                  && x - playerRadius < u + w / 2 
-                                                  && y + playerRadius > v - h / 2
-                                                  && y - playerRadius < v + h / 2 = True
-                                                | otherwise = False
+collisionMarioSquare (Player (x,y) _ _) u v w h     |    x + playerRadius > u - w / 2
+                                                      && x - playerRadius < u + w / 2 
+                                                      && y + playerRadius > v - h / 2
+                                                      && y - playerRadius < v + h / 2 = True
+                                                    | otherwise = False
+
+                                              
 
 
 collisionMarioEndFlag :: Player -> EndFlag -> Bool
@@ -87,7 +90,7 @@ inputKey (EventKey (SpecialKey KeyLeft) Down _ _) gstate@GameState{player = p}
 inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate@GameState{player = p}
-  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 54}} --must become if there is colision between mario and blocks then become 0
+  | collisionMarioAnyBlock (player gstate) (blocks gstate) = gstate {player = p {vertmove = 10}} --must become if there is colision between mario and blocks then become 0
 inputKey (EventKey (Char 'p') Down _ _) gstate -- Dit handelt de pauze af
   | (pause gstate) == Running = gstate {pause = Paused}
   | otherwise = gstate {pause = Running}

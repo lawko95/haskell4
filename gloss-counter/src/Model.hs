@@ -15,10 +15,11 @@ data GameState = GameState {
                  , enemies     :: [Enemy]
                  , endFlag     :: EndFlag
                  , pause       :: Pause
+                 , score       :: Int
                  }
 
 initialState :: GameState
-initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-400),0) 0 0) level1Blocks level1Enemies level1EndFlag running
+initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-400),0) 0 0) level1Blocks level1Enemies level1EndFlag running 1000
 
 data Player = Player {
                 position :: (Float, Float) 
@@ -53,6 +54,6 @@ data Pause = Paused | Running
 running = Running :: Pause
 
 level1Blocks :: [Block]
-level1Blocks =  [Block (-450) (-100), Block (-400) (-100), Block (-350) (-100), Block (-300) (-100)--, Block (-250) (-100), Block (-200) (-100)
+level1Blocks =  [Block (-450) (-70), Block (-400) (-70), Block (-350) (-70), Block (-300) (-70)--, Block (-250) (-100), Block (-200) (-100)
                 , Block (-150) (-100), Block (-100) (-100), Block (-50) (-100), Block 0 (-100), Block 50 (-100), Block 100 (-100)
                 , Block 150 (-100), Block 200 (-100), Block 250 (-100), Block 300 (-100), Block 350 (-100), Block 400 (-100), Block 450 (-100)]
