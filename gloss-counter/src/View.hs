@@ -15,6 +15,7 @@ viewPure gstate = case infoToShow gstate of
                               , pictures $ endFlagToPicture (endFlag gstate)
                               , translate h v (color black (circleSolid playerRadius))]
   ShowVictory -> translate (-440) 0 $ Text "Congratulations"
+  ShowPause -> translate (-440) 0 $ Text "Game paused"
 
 endFlagToPicture :: EndFlag -> [Picture]
 endFlagToPicture (EndFlag (x,y)) = [translate x y $ color black $ rectangleSolid endFlagWidth endFlagHeight, translate x y $ color white $ rectangleWire endFlagWidth endFlagHeight]
