@@ -41,9 +41,9 @@ step secs gstate
               updatedPosition = updateMarioPosition gstate
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy --check if enemy is colliding with any block, if not, fall untill it does, then vertical speed = 0
-updateEnemyPosition e@(Enemy (x,y) h v _) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) True 
-                                             | collisionEnemy1SideAnyBlock e 'r' bs = Enemy (x - h, y + v) (-h) v True
-                                             | collisionEnemy1SideAnyBlock e 'l' bs = Enemy (x - h, y + v) (-h) v True
+updateEnemyPosition e@(Enemy (x,y) h v _) bs | not (collisionAnyBlock e bs) = Enemy (x + h, y + v) h (-5) True 
+                                             | collisionSideAnyBlock e 'r' bs = Enemy (x - h, y + v) (-h) v True
+                                             | collisionSideAnyBlock e 'l' bs = Enemy (x - h, y + v) (-h) v True
                                              | otherwise = Enemy (x + h, y + v) h 0 True
 
 updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy] -- map updateEnemyPosition to all enemies
@@ -137,10 +137,10 @@ updateMarioPosition gstate@GameState{player = p, enemies = e}
     | collisionMario1SideAnyEnemy p 'u' e ||
       collisionMario1SideAnyEnemy p 'r' e ||
       collisionMario1SideAnyEnemy p 'l' e =  gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} 
-    | collisionMario1SideAnyEnemy p 'd' e = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyBouncedPositions p e (blocks gstate)} 
+    | collisionMario1SideAnyEnemy p 'd' e = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p)), kleur = green}, enemies = updateEnemyBouncedPositions p e (blocks gstate)} 
     | snd (position (p)) < (-200) = gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} 
     -- otherwise update everyone's position normally
-    | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyPositions e (blocks gstate)} 
+    | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p)), kleur = blue}, enemies = updateEnemyPositions e (blocks gstate)} 
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
@@ -149,7 +149,7 @@ input e gstate = return (inputKey e gstate)
 inputKey :: Event -> GameState -> GameState
 -- move right when the right arrowkey is down, stop moving right when it is up
 inputKey (EventKey (SpecialKey KeyRight) Down _ _) gstate@GameState{player = p}
-  | not (collisionMario1SideAnyBlock (player gstate) 'r' (blocks gstate)) = gstate {player = p {hormove = 20}}
+  | not (collisionSideAnyBlock (player gstate) 'r' (blocks gstate)) = gstate {player = p {hormove = 20}}
 inputKey (EventKey (SpecialKey KeyRight) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 -- same for left
@@ -159,7 +159,7 @@ inputKey (EventKey (SpecialKey KeyLeft) Up _ _) gstate@GameState{player = p}
   = gstate {player = p {hormove = 0}}
 -- jump if the up arrowkey is pressed and mario is on the ground
 inputKey (EventKey (SpecialKey KeyUp) Down _ _) gstate@GameState{player = p}
-  | collisionMario1SideAnyBlock (player gstate) 'd' (blocks gstate) = gstate {player = p {vertmove = 22}} -- after this mario will start falling
+  | collisionSideAnyBlock (player gstate) 'd' (blocks gstate) = gstate {player = p {vertmove = 22}} -- after this mario will start falling
 -- pause when 'P' is pressed
 inputKey (EventKey (Char 'p') Down _ _) gstate
   | (pause gstate) == Running = gstate {pause = Paused}
