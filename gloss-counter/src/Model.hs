@@ -1,8 +1,19 @@
 -- | This module contains the data types
 --   which represent the state of the game
+
+
 module Model where
 
+import System.Random
+
 data InfoToShow = ShowWorld (Float, Float) | ShowVictory | ShowPause
+
+instance Eq InfoToShow where
+  ShowWorld (x, y) == (ShowWorld (a, b)) = x == a && y == b
+  ShowVictory == ShowVictory = True
+  ShowPause == ShowPause = True
+  _ == _ = False
+
 
 nO_SECS_BETWEEN_CYCLES :: Float
 nO_SECS_BETWEEN_CYCLES = 0.05

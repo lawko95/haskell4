@@ -7,12 +7,18 @@ import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
+import System.IO
+import Data.Char
+import Control.Monad (when)
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate
    | (pause gstate) == Paused = return $ gstate {infoToShow = ShowPause} -- Als de game op pauze staat laat dan alleen het pauzescherm zien en bereken niets
-   | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory} --laat de victory message zien als mario de endflag raakt
+   | collisionMarioEndFlag (player gstate) (endFlag gstate) && infoToShow gstate /= ShowVictory = do
+                                                                                                  writeScore gstate 
+                                                                                                  return $ gstate {infoToShow = ShowVictory} --laat de victory message zien als mario de endflag raakt
+   | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory}
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES
      = return $ GameState (ShowWorld newPosition)
                          0 
@@ -29,7 +35,7 @@ step secs gstate
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy
 updateEnemyPosition e@(Enemy (x,y) h v _) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) True--check of enemy collide met blocks, zo niet, val dan totdat dat wel zo is
-                                           | otherwise = Enemy (x + h, y + v) h 0 True--als de enemy collide met blocks willen we de vertical speed op 0
+                                             | otherwise = Enemy (x + h, y + v) h 0 True--als de enemy collide met blocks willen we de vertical speed op 0
 
 updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy]
 updateEnemyPositions [] _ = []
@@ -54,9 +60,17 @@ collisionMarioSquare (Player (x,y) _ _) u v w h     |    x + playerRadius > u - 
 
                                               
 
-
 collisionMarioEndFlag :: Player -> EndFlag -> Bool
 collisionMarioEndFlag p (EndFlag (u,v)) = collisionMarioSquare p u v endFlagWidth endFlagHeight
+
+writeScore :: GameState -> IO ()      -- write the score to a file
+writeScore gstate@GameState{score = s, player = p, endFlag = f}
+  | collisionMarioEndFlag p f = do
+                              list <- readFile "Scores.txt"
+                              let scoreList = ((show (score gstate)) ++ "\n" ++ list)
+                              when (length scoreList > 0) $
+                                writeFile "Scores.txt" scoreList
+                              
 
 collisionMarioBlock :: Player -> Block -> Bool
 collisionMarioBlock p (Block u v) = collisionMarioSquare p u v blockWidth blockHeight
