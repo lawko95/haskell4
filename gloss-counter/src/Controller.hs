@@ -20,30 +20,36 @@ step secs gstate
                                                                                                   return $ gstate {infoToShow = ShowVictory} 
    | collisionMarioEndFlag (player gstate) (endFlag gstate) = return $ gstate {infoToShow = ShowVictory}
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES     -- When the game is not paused or finished, update the gamestate once every step
-     = return $ GameState (ShowWorld newPosition)
+     = return $ GameState ShowWorld
                          0 
-                         (Player ((newPosition)) (updateHorMove) vertspeed (kleur (player gstate))) -- move the player according to it's speed
+                         (Player newPosition updateHorMove updateVertMove (kleur (player gstate))) -- move the player according to it's speed
                          (blocks gstate) 
-                         (aliveEnemies (enemies (updateMarioPosition gstate))) -- update enemies based on what mario is doing
+                         (aliveEnemies (enemies updatedPosition)) -- update enemies based on what mario is doing
                          (endFlag gstate)                       -- keep everything else the same
                          (pause gstate)
                          (score gstate - 1)
    | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs} -- Update the time
-        where vertspeed | collisionMario1SideAnyBlock (player (updateMarioPosition gstate)) 'd' (blocks gstate) = 0 -- if mario is stand on a block vertical speed should be 0
-                        | collisionMario1SideAnyBlock (player (updateMarioPosition gstate)) 'u' (blocks gstate) -- if mario's top hits a block, mario should go back down again
-                          && vertmove (player gstate) > -3 =  -3 
-                        | vertmove (player gstate) <= -20 = vertmove (player gstate) -- for high falls we do not want mario to start falling at ridiculous speeds
-                        | otherwise = vertmove (player gstate) -3 -- otherwise mario should be falling until he hits a block or falls off the level
-              newPosition = position (player (updateMarioPosition gstate)) 
-              updateHorMove | collisionMario1SideAnyBlock (player (updateMarioPosition gstate)) 'r' (blocks gstate) ||
-                              collisionMario1SideAnyBlock (player (updateMarioPosition gstate)) 'l' (blocks gstate)= 0
+        where updateVertMove | collisionMario1SideAnyBlock (player updatedPosition) 'd' (blocks gstate) = 0 -- if mario is stand on a block vertical speed should be 0
+                             | collisionMario1SideAnyBlock (player updatedPosition) 'u' (blocks gstate) -- if mario's top hits a block, mario should go back down again
+                             && vertmove (player gstate) > -3 =  -3 
+                             | vertmove (player gstate) <= -20 = vertmove (player gstate) -- for high falls we do not want mario to start falling at ridiculous speeds
+                             | otherwise = vertmove (player gstate) -3 -- otherwise mario should be falling until he hits a block or falls off the level
+              updateHorMove | collisionMario1SideAnyBlock (player updatedPosition) 'r' (blocks gstate) ||
+                              collisionMario1SideAnyBlock (player updatedPosition) 'l' (blocks gstate) = 0
                             | otherwise = hormove (player gstate)
+              newPosition = position (player (updateMarioPosition gstate)) 
+              updatedPosition = updateMarioPosition gstate
 
 updateEnemyPosition :: Enemy -> [Block] -> Enemy --check if enemy is colliding with any block, if not, fall untill it does, then vertical speed = 0
 updateEnemyPosition e@(Enemy (x,y) h v _) bs | not (collisionEnemyAnyBlock e bs) = Enemy (x + h, y + v) h (-5) True 
                                              | collisionEnemy1SideAnyBlock e 'r' bs = Enemy (x - h, y + v) (-h) v True
                                              | collisionEnemy1SideAnyBlock e 'l' bs = Enemy (x - h, y + v) (-h) v True
                                              | otherwise = Enemy (x + h, y + v) h 0 True
+
+updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy] -- map updateEnemyPosition to all enemies
+updateEnemyPositions es bs = map localUpdateEnemy es
+  where localUpdateEnemy e@(Enemy (x,y) h v _) | x > 2000 || x < -2000 || y > 2000 || y < -2000 = Enemy (x,y) h v False  -- stop calculating for enemies that have long left the map
+                                             | otherwise = updateEnemyPosition e bs
 
 updateEnemyBouncedPositions :: Player -> [Enemy] -> [Block] -> [Enemy]
 updateEnemyBouncedPositions p es bs = map (\e -> updateEnemyBouncedPosition p e bs) es
@@ -54,74 +60,62 @@ updateEnemyBouncedPosition p e bs | collisionMario1SideEnemy p 'd' e = bounceOnE
 
 aliveEnemies :: [Enemy] -> [Enemy]
 aliveEnemies [] = []
-aliveEnemies (e@(Enemy x h v a):es) | a = e : aliveEnemies es
+aliveEnemies (e@(Enemy _ _ _ a):es) | a = e : aliveEnemies es
                                     | otherwise = aliveEnemies es
 
 bounceOnEnemy :: Enemy -> Enemy
 bounceOnEnemy (Enemy x h v _) = Enemy x h v False
 
-updateEnemyPositions :: [Enemy] -> [Block] -> [Enemy] -- map updateEnemyPosition to all enemies
-updateEnemyPositions es bs = map (\e -> updateEnemyPosition e bs) es
-
-collisionEnemyBlock :: Enemy -> Block -> Bool -- check if the enemy is overlapping with a block, if so there is collision with that block
-collisionEnemyBlock (Enemy (x,y) _ _ _) (Block u v) |    x + enemyWidth / 1.5  > u - blockWidth / 2
-                                                    && x - enemyWidth / 1.5  < u + blockWidth / 2
-                                                    && y + enemyHeight / 1.5 > v - blockHeight / 2
-                                                    && y - enemyHeight / 1.5 < v + blockHeight / 2 = True
-                                                  | otherwise = False
-
 collisionEnemyAnyBlock :: Enemy -> [Block] -> Bool -- check if the enemy is colliding with any of the blocks in the level
-collisionEnemyAnyBlock e = or . map (collisionEnemyBlock e)
+collisionEnemyAnyBlock (Enemy (x,y)_ _ _) = or . map (\(Block u v) -> collisionSquareSquare x y (enemyWidth / 1.5) (enemyHeight / 1.5) u v (blockWidth / 2) (blockHeight / 2))
+
+collisionSquareSquare :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Bool -- First 4 floats for position and width/height of object 1, second 4 floats for object 2
+collisionSquareSquare x1 y1 w1 h1 x2 y2 w2 h2 |  x1 + w1 > x2 - w2 
+                                              && x1 - w1 < x2 + w2
+                                              && y1 + h1 > y2 - h2
+                                              && y1 - h1 < y2 + h2 = True
+                                              | otherwise = False
 
 collisionMarioSquare :: Player -> Float -> Float -> Float -> Float -> Bool -- check if mario is overlapping with a block
-collisionMarioSquare (Player (x,y) _ _ _) u v w h     |    x + playerRadius > u - w / 2
-                                                      && x - playerRadius < u + w / 2 
-                                                      && y + playerRadius > v - h / 2
-                                                      && y - playerRadius < v + h / 2 = True
-                                                    | otherwise = False
+collisionMarioSquare (Player (x,y) _ _ _) u v w h = collisionSquareSquare x y playerRadius playerRadius u v w h
 
-collisionMario1SideSquare :: Float -> Float -> Char -> Float -> Float -> Float -> Float -> Bool
-collisionMario1SideSquare x y 'u' u v w h |   x + playerRadius > u - w / 2  -- Check if the upside of mario is colliding with any square
-                                                         && x - playerRadius < u + w / 2 
-                                                         && y + playerRadius > v - h / 2
-                                                         && y + playerRadius < v + h / 2 = True
+collisionSquare1SideSquare :: Float -> Float -> Float -> Float -> Char -> Float -> Float -> Float -> Float -> Bool -- first 4 floats for position/width/height of object 1, character for side of object 1 colliding, second 4 float for object 2
+collisionSquare1SideSquare x y w1 h1 'u' u v w2 h2 |   x + w1 > u - w2 / 2  -- Check if the upside of mario is colliding with any square
+                                                         && x - w1 < u + w2 / 2 
+                                                         && y + h1 > v - h2 / 2
+                                                         && y + h1 < v + h2 / 2 = True
                                                          | otherwise = False 
-collisionMario1SideSquare x y 'd' u v w h |   x + playerRadius > u - w / 2 -- Downside
-                                                         && x - playerRadius < u + w / 2 
-                                                         && y - playerRadius > v - h / 2
-                                                         && y - playerRadius < v + h / 2 = True
+collisionSquare1SideSquare x y w1 h1 'd' u v w2 h2 |   x + w1 > u - w2 / 2 -- Downside
+                                                         && x - w1 < u + w2 / 2 
+                                                         && y - h1 > v - h2 / 2
+                                                         && y - h1 < v + h2 / 2 = True
                                                          | otherwise = False 
-collisionMario1SideSquare x y 'r' u v w h |   x + playerRadius > u - w / 2 -- Right, for right and left we are stricter on what a collision means to get mario stuck less often
-                                                         && x + playerRadius < u + w / 2 
-                                                         && y > v - h / 2
-                                                         && y  < v + h / 2 = True
+collisionSquare1SideSquare x y w1 h1 'r' u v w2 h2 |   x + w1 > u - w2 / 2 -- Right, for right and left we are stricter on what a collision means to get mario stuck less often
+                                                         && x + w1 < u + w2 / 2 
+                                                         && y > v - h2 / 2
+                                                         && y  < v + h2 / 2 = True
                                                          | otherwise = False 
-collisionMario1SideSquare x y 'l' u v w h |   x - playerRadius > u - w / 2 -- Left
-                                                         && x - playerRadius < u + w / 2 
-                                                         && y > v - h / 2
-                                                         && y < v + h / 2 = True
+collisionSquare1SideSquare x y w1 h1 'l' u v w2 h2 |   x - w1 > u - w2 / 2 -- Left
+                                                         && x - w1 < u + w2 / 2 
+                                                         && y > v - h2 / 2
+                                                         && y < v + h2 / 2 = True
                                                          | otherwise = False
                                                          
-collisionEnemy1SideBlock :: Enemy -> Char -> Block -> Bool
-collisionEnemy1SideBlock (Enemy (x,y) _ _ _) c (Block u v) = collisionMario1SideSquare x y c u v blockWidth blockHeight
 
 collisionEnemy1SideAnyBlock :: Enemy -> Char -> [Block] -> Bool
-collisionEnemy1SideAnyBlock e c = or . map (collisionEnemy1SideBlock e c)
-
-collisionMario1SideBlock :: Player -> Char -> Block -> Bool
-collisionMario1SideBlock (Player (x,y) _ _ _) c (Block u v) = collisionMario1SideSquare x y c u v blockWidth blockHeight
+collisionEnemy1SideAnyBlock (Enemy (x,y) _ _ _) c = or . map (\(Block u v) -> collisionSquare1SideSquare x y (enemyWidth / 1.75) (enemyHeight / 1.75) c u v blockWidth blockHeight)
 
 collisionMario1SideAnyBlock :: Player -> Char -> [Block] -> Bool
-collisionMario1SideAnyBlock p c = or . map (collisionMario1SideBlock p c)
+collisionMario1SideAnyBlock (Player (x,y) _ _ _) c = or . map (\(Block u v) -> collisionSquare1SideSquare x y playerRadius playerRadius c u v blockWidth blockHeight)
 
 collisionMarioEndFlag :: Player -> EndFlag -> Bool -- check if mario is colliding with the end flag
 collisionMarioEndFlag p (EndFlag (u,v)) = collisionMarioSquare p u v endFlagWidth endFlagHeight
 
 collisionMario1SideEnemy :: Player -> Char -> Enemy -> Bool -- check if mario is colliding with a specific enemy
-collisionMario1SideEnemy (Player (x,y) _ _ _) c (Enemy (u,v) _ _ _) = collisionMario1SideSquare x y c u v enemyWidth enemyHeight
+collisionMario1SideEnemy (Player (x,y) _ _ _) c (Enemy (u,v) _ _ _) = collisionSquare1SideSquare x y playerRadius playerRadius c u v enemyWidth enemyHeight
 
 collisionMario1SideAnyEnemy :: Player -> Char -> [Enemy] -> Bool -- check if mario is colliding with any enemy
-collisionMario1SideAnyEnemy p c = or . map (collisionMario1SideEnemy p c)  
+collisionMario1SideAnyEnemy (Player (x,y) _ _ _) c = or . map (\(Enemy (u,v) _ _ _) -> collisionSquare1SideSquare x y playerRadius playerRadius c u v enemyWidth enemyHeight)
 
 writeScore :: GameState -> IO ()      -- write the score to a file containing a list of scores
 writeScore gstate@GameState{score = s, player = p, endFlag = f}
@@ -131,19 +125,11 @@ writeScore gstate@GameState{score = s, player = p, endFlag = f}
                               when (length scoreList > 0) $                             -- (required to avoid errors)
                                 writeFile "Scores.txt" scoreList                        -- write back to scores.txt
                               
-
-collisionMarioBlock :: Player -> Block -> Bool -- check if mario is colliding with a specific block
-collisionMarioBlock p (Block u v) = collisionMarioSquare p u v blockWidth blockHeight
-
 collisionMarioAnyBlock :: Player -> [Block] -> Bool -- check if mario is colliding with any block
-collisionMarioAnyBlock p = or . map (collisionMarioBlock p)
-
-collisionMarioEnemy :: Player -> Enemy -> Bool -- check if mario is colliding with a specific enemy
-collisionMarioEnemy p (Enemy (u,v) _ _ _) = collisionMarioSquare p u v enemyWidth enemyHeight
-
+collisionMarioAnyBlock p = or . map (\(Block u v) -> collisionMarioSquare p u v blockWidth blockHeight)
 
 collisionMarioAnyEnemy :: Player -> [Enemy] -> Bool -- check if mario is colliding with any enemy
-collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)                                        
+collisionMarioAnyEnemy p = or . map (\(Enemy (u,v) _ _ _) -> collisionMarioSquare p u v enemyWidth enemyHeight)                            
 
 updateMarioPosition :: GameState -> GameState -- update mario's and the enemy's positions
 updateMarioPosition gstate@GameState{player = p, enemies = e} 

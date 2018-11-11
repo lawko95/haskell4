@@ -7,10 +7,10 @@ module Model where
 import System.Random
 import Graphics.Gloss
 
-data InfoToShow = ShowWorld (Float, Float) | ShowVictory | ShowPause
+data InfoToShow = ShowWorld | ShowVictory | ShowPause
 
 instance Eq InfoToShow where 
-  ShowWorld (x, y) == (ShowWorld (a, b)) = True --x == a && y == b   volgens mij zijn showworlds gewoon gelijk aan elkaar toch?
+  ShowWorld == ShowWorld = True 
   ShowVictory == ShowVictory = True
   ShowPause == ShowPause = True
   _ == _ = False
@@ -31,7 +31,7 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0 blue) level1Blocks level1Enemies level1EndFlag running 1000
+initialState = GameState ShowWorld 0 (Player ((-700),0) 0 0 blue) level1Blocks level1Enemies level1EndFlag running 1000
 
 data Player = Player {
                 position :: (Float, Float) 
@@ -69,7 +69,7 @@ data Pause = Paused | Running
   deriving Eq
 running = Running :: Pause
 
-level1Blocks :: [Block] -- list of all blocks in the level
+level1Blocks :: [Block] -- list of all blocks in the first level
 level1Blocks =  [ Block (-550) (-120), Block (-450) (-120), Block (-400) (-120), Block (-350) (-120), Block (-400) (-40), Block (-200) (-165), Block (-200) (-130), Block (-200) (-95)
                 , Block (-50) (-165), Block (-50) (-130), Block (-50) (-95), Block (-50) (-60)
                 , Block (200) (-165), Block (200) (-130), Block (200) (-95), Block (200) (-60)
