@@ -27,10 +27,12 @@ data GameState = GameState {
                  , endFlag     :: EndFlag
                  , pause       :: Pause
                  , score       :: Int
+                 , rand        :: StdGen
                  }
 
-initialState :: GameState
-initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0) level1Blocks level1Enemies level1EndFlag running 1000
+initialState :: StdGen -> GameState
+initialState g = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0) level1Blocks (fst enms) level1EndFlag running 1000 (snd enms)
+  where enms = level1Enemies g
 
 data Player = Player {
                 position :: (Float, Float) 
@@ -48,8 +50,19 @@ data Enemy = Enemy {
 enemyWidth  = 35 :: Float
 enemyHeight = 35 :: Float
 
-level1Enemies :: [Enemy]
-level1Enemies = [Enemy (100,60) 3 0 False, Enemy ((-200),30) 2 0 True, Enemy (300,0) (-6) 0 True]
+makeEnemy :: RandomGen -> (Enemy, RandomGen)
+makeEnemy r = do
+              a <- randomR (-300,300) r
+              return((Enemy ((fst a),100) 3 0 True),(snd a)) 
+
+level1Enemies :: RandomGen -> ([Enemy], RandomGen)
+level1Enemies  r = do
+                  a <- makeEnemy r
+                  b <- makeEnemy (snd a)
+                  c <- makeEnemy (snd b)
+                  return ([(fst a), (fst b), (fst c)],(snd c))
+              
+--level1Enemies = [Enemy (randomR,100) 3 0 True, Enemy ((-200),100) 2 0 True, Enemy (300,100) (-6) 0 True]
 
 data EndFlag = EndFlag { flagPosition :: (Float, Float) }
 endFlagWidth  = 20 :: Float

@@ -28,6 +28,7 @@ step secs gstate
                          (endFlag gstate)
                          (pause gstate)
                          (score gstate)
+                         (rand gstate)
    | otherwise = return $ gstate {elapsedTime = elapsedTime gstate + secs, score = score gstate - 1} -- Just update the elapsed time
         where vertspeed | collisionMarioAnyBlock (player (updateMarioPosition gstate)) (blocks gstate) = 0 -- if there is colision between mario and blocks then the vertical speed should be 0
                         | otherwise = vertmove (player gstate) -3 --otherwise mario should be falling until he hits a block or falls off the level
@@ -86,10 +87,10 @@ collisionMarioAnyEnemy :: Player -> [Enemy] -> Bool
 collisionMarioAnyEnemy p = or . map (collisionMarioEnemy p)                                        
 
 updateMarioPosition :: GameState -> GameState
-updateMarioPosition gstate@GameState{player = p, enemies = e} 
+updateMarioPosition gstate@GameState{player = p, enemies = e, rand = r} 
    -- | collisionMarioAnyEnemy p e && snd (position (p)) > snd (position (e)) = 
-    | collisionMarioAnyEnemy p e =  gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario collide met een enemy reset dan mario's positie en van alle enemies
-    | snd (position (p)) < (-200) = gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} --als mario uit het land is gevallen reset dan mario's positie en alle enemies
+    | collisionMarioAnyEnemy p e =  gstate {player = p {position = position (player (initialState r))}, enemies = enemies (initialState r)} --als mario collide met een enemy reset dan mario's positie en van alle enemies
+    | snd (position (p)) < (-200) = gstate {player = p {position = position (player (initialState r))}, enemies = enemies (initialState r)} --als mario uit het land is gevallen reset dan mario's positie en alle enemies
     | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyPositions (enemies gstate) (blocks gstate)} --update mario's positie en alle enemies 1 step
 
 -- | Handle user input
