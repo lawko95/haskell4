@@ -22,7 +22,7 @@ step secs gstate
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES     -- When the game is not paused or finished, update the gamestate once every step
      = return $ GameState (ShowWorld newPosition)
                          0 
-                         (Player ((newPosition)) (updateHorMove) vertspeed (kleur (player gstate))) -- move the player according to it's speed
+                         (Player ((newPosition)) (updateHorMove) vertspeed (newColor)) -- move the player according to it's speed
                          (blocks gstate) 
                          (aliveEnemies (enemies (updateMarioPosition gstate))) -- update enemies based on what mario is doing
                          (endFlag gstate)                       -- keep everything else the same
@@ -35,6 +35,7 @@ step secs gstate
                         | vertmove (player gstate) <= -20 = vertmove (player gstate) -- for high falls we do not want mario to start falling at ridiculous speeds
                         | otherwise = vertmove (player gstate) -3 -- otherwise mario should be falling until he hits a block or falls off the level
               newPosition = position (player (updateMarioPosition gstate)) 
+              newColor    = kleur (player (updateMarioPosition gstate))
               updateHorMove | collisionSideAnyBlock (player (updateMarioPosition gstate)) 'r' (blocks gstate) ||
                               collisionSideAnyBlock (player (updateMarioPosition gstate)) 'l' (blocks gstate)= 0
                             | otherwise = hormove (player gstate)
@@ -93,11 +94,11 @@ collisionSideSquare x y 'l' u v w h |   x - playerRadius > u - w / 2 -- Left
                                                          | otherwise = False
 
                                                          
-class Collidable c where
-  collisionSideBlock :: c -> Char -> Block -> Bool
-  collisionSideAnyBlock :: c -> Char -> [Block] -> Bool
-  collisionBlock :: c -> Block -> Bool
-  collisionAnyBlock ::c -> [Block] -> Bool
+class Collidable c where --things that should not move through walls
+  collisionSideBlock :: c -> Char -> Block -> Bool -- are we colliding with the side of this block
+  collisionSideAnyBlock :: c -> Char -> [Block] -> Bool -- are we colliding with the side of any block
+  collisionBlock :: c -> Block -> Bool -- are we colliding with this block in any way
+  collisionAnyBlock ::c -> [Block] -> Bool -- are we colliding with any block in any way
 
 instance Collidable Player where
   collisionSideBlock (Player (x,y) _ _ _) c (Block u v) = collisionSideSquare x y c u v blockWidth blockHeight
@@ -146,10 +147,10 @@ updateMarioPosition gstate@GameState{player = p, enemies = e}
     | collisionMario1SideAnyEnemy p 'u' e ||
       collisionMario1SideAnyEnemy p 'r' e ||
       collisionMario1SideAnyEnemy p 'l' e =  gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} 
-    | collisionMario1SideAnyEnemy p 'd' e = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyBouncedPositions p e (blocks gstate)} 
+    | collisionMario1SideAnyEnemy p 'd' e = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p)), kleur = green}, enemies = updateEnemyBouncedPositions p e (blocks gstate)} 
     | snd (position (p)) < (-200) = gstate {player = p {position = position (player initialState)}, enemies = enemies initialState} 
     -- otherwise update everyone's position normally
-    | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p))}, enemies = updateEnemyPositions e (blocks gstate)} 
+    | otherwise = gstate {player = p {position = (fst (position (p)) + hormove (p), snd (position (p)) + vertmove (p)), kleur = blue}, enemies = updateEnemyPositions e (blocks gstate)} 
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
