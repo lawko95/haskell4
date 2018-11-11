@@ -53,7 +53,7 @@ enemyWidth  = 35 :: Float
 enemyHeight = 35 :: Float
 
 level1Enemies :: [Enemy] -- list of enemies in the first level
-level1Enemies = [Enemy (100,60) 3 0 True, Enemy ((-200),30) 2 0 True, Enemy (300,0) (-6) 0 True]
+level1Enemies = [Enemy ((-200),30) 2 0 True, Enemy (100,60) 3 0 True, Enemy (300,0) (-6) 0 True]
 
 data EndFlag = EndFlag { flagPosition :: (Float, Float) }
 endFlagWidth  = 20 :: Float
