@@ -8,7 +8,7 @@ import System.Random
 
 data InfoToShow = ShowWorld (Float, Float) | ShowVictory | ShowPause
 
-instance Eq InfoToShow where
+instance Eq InfoToShow where 
   ShowWorld (x, y) == (ShowWorld (a, b)) = x == a && y == b
   ShowVictory == ShowVictory = True
   ShowPause == ShowPause = True
@@ -45,10 +45,12 @@ data Enemy = Enemy {
               , evertmove :: Float
               , alive     :: Bool
 }
+
+
 enemyWidth  = 35 :: Float
 enemyHeight = 35 :: Float
 
-level1Enemies :: [Enemy]
+level1Enemies :: [Enemy] -- list of enemies in the first level
 level1Enemies = [Enemy (100,60) 3 0 False, Enemy ((-200),30) 2 0 True, Enemy (300,0) (-6) 0 True]
 
 data EndFlag = EndFlag { flagPosition :: (Float, Float) }
@@ -65,7 +67,7 @@ data Pause = Paused | Running
   deriving Eq
 running = Running :: Pause
 
-level1Blocks :: [Block]
+level1Blocks :: [Block] -- list of all blocks in the level
 level1Blocks =  [ Block (-550) (-120), Block (-450) (-120), Block (-400) (-120), Block (-350) (-120), Block (-400) (-40), Block (-200) (-165), Block (-200) (-130), Block (-200) (-95)
                 , Block (-50) (-165), Block (-50) (-130), Block (-50) (-95), Block (-50) (-60)
                 , Block (200) (-165), Block (200) (-130), Block (200) (-95), Block (200) (-60)
