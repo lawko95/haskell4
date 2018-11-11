@@ -13,7 +13,7 @@ viewPure gstate = case infoToShow gstate of
   ShowWorld (h,v) -> pictures [pictures $ blocksToPictures level1Blocks --show everything in the game
                               , pictures $ enemiesToPictures (enemies gstate)
                               , pictures $ endFlagToPicture (endFlag gstate)
-                              , translate h v (color black (circleSolid playerRadius))]
+                              , translate h v (color (kleur (player gstate)) (circleSolid playerRadius))]
   ShowVictory -> translate (-440) 0 $ Text ("Score: " ++ (show (score gstate))) -- when the game is won show the score
   ShowPause -> translate (-440) 0 $ Text "Game paused" -- show pause screen
 

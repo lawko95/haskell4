@@ -22,7 +22,7 @@ step secs gstate
    | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES     -- When the game is not paused or finished, update the gamestate once every step
      = return $ GameState (ShowWorld newPosition)
                          0 
-                         (Player ((newPosition)) (updateHorMove) vertspeed) -- move the player according to it's speed
+                         (Player ((newPosition)) (updateHorMove) vertspeed (kleur (player gstate))) -- move the player according to it's speed
                          (blocks gstate) 
                          (aliveEnemies (enemies (updateMarioPosition gstate))) -- update enemies based on what mario is doing
                          (endFlag gstate)                       -- keep everything else the same
@@ -74,7 +74,7 @@ collisionEnemyAnyBlock :: Enemy -> [Block] -> Bool -- check if the enemy is coll
 collisionEnemyAnyBlock e = or . map (collisionEnemyBlock e)
 
 collisionMarioSquare :: Player -> Float -> Float -> Float -> Float -> Bool -- check if mario is overlapping with a block
-collisionMarioSquare (Player (x,y) _ _) u v w h     |    x + playerRadius > u - w / 2
+collisionMarioSquare (Player (x,y) _ _ _) u v w h     |    x + playerRadius > u - w / 2
                                                       && x - playerRadius < u + w / 2 
                                                       && y + playerRadius > v - h / 2
                                                       && y - playerRadius < v + h / 2 = True
@@ -109,7 +109,7 @@ collisionEnemy1SideAnyBlock :: Enemy -> Char -> [Block] -> Bool
 collisionEnemy1SideAnyBlock e c = or . map (collisionEnemy1SideBlock e c)
 
 collisionMario1SideBlock :: Player -> Char -> Block -> Bool
-collisionMario1SideBlock (Player (x,y) _ _) c (Block u v) = collisionMario1SideSquare x y c u v blockWidth blockHeight
+collisionMario1SideBlock (Player (x,y) _ _ _) c (Block u v) = collisionMario1SideSquare x y c u v blockWidth blockHeight
 
 collisionMario1SideAnyBlock :: Player -> Char -> [Block] -> Bool
 collisionMario1SideAnyBlock p c = or . map (collisionMario1SideBlock p c)
@@ -118,7 +118,7 @@ collisionMarioEndFlag :: Player -> EndFlag -> Bool -- check if mario is collidin
 collisionMarioEndFlag p (EndFlag (u,v)) = collisionMarioSquare p u v endFlagWidth endFlagHeight
 
 collisionMario1SideEnemy :: Player -> Char -> Enemy -> Bool -- check if mario is colliding with a specific enemy
-collisionMario1SideEnemy (Player (x,y) _ _) c (Enemy (u,v) _ _ _) = collisionMario1SideSquare x y c u v enemyWidth enemyHeight
+collisionMario1SideEnemy (Player (x,y) _ _ _) c (Enemy (u,v) _ _ _) = collisionMario1SideSquare x y c u v enemyWidth enemyHeight
 
 collisionMario1SideAnyEnemy :: Player -> Char -> [Enemy] -> Bool -- check if mario is colliding with any enemy
 collisionMario1SideAnyEnemy p c = or . map (collisionMario1SideEnemy p c)  

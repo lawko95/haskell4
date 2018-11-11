@@ -5,6 +5,7 @@
 module Model where
 
 import System.Random
+import Graphics.Gloss
 
 data InfoToShow = ShowWorld (Float, Float) | ShowVictory | ShowPause
 
@@ -30,12 +31,13 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0) level1Blocks level1Enemies level1EndFlag running 1000
+initialState = GameState (ShowWorld ((-400),0)) 0 (Player ((-700),0) 0 0 blue) level1Blocks level1Enemies level1EndFlag running 1000
 
 data Player = Player {
                 position :: (Float, Float) 
               , hormove  :: Float
               , vertmove :: Float
+              , kleur    :: Color
               }  
 playerRadius = 20 :: Float
 

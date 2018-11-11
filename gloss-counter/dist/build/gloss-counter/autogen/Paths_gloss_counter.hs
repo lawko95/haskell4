@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE NoRebindableSyntax #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# OPTIONS_GHC -fno-warn-missing-import-lists #-}
-{-# OPTIONS_GHC -fno-warn-implicit-prelude #-}
 module Paths_gloss_counter (
     version,
     getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir,
@@ -31,23 +31,23 @@ catchIO = Exception.catch
 version :: Version
 version = Version [0,1,0,0] []
 prefix, bindirrel :: FilePath
-prefix        = "C:\\Users\\lawko\\AppData\\Roaming\\cabal"
+prefix        = "C:\\Users\\elise\\AppData\\Roaming\\cabal"
 bindirrel     = "bin"
 
 getBinDir :: IO FilePath
 getBinDir = getPrefixDirRel bindirrel
 
 getLibDir :: IO FilePath
-getLibDir = getPrefixDirRel "x86_64-windows-ghc-8.2.1\\gloss-counter-0.1.0.0-8CACllsMzzC4pB1ddLt1JX-gloss-counter"
+getLibDir = getPrefixDirRel "x86_64-windows-ghc-8.4.3\\gloss-counter-0.1.0.0-7ToAShSPflw5JlFpceer1k-gloss-counter"
 
 getDynLibDir :: IO FilePath
-getDynLibDir = getPrefixDirRel "x86_64-windows-ghc-8.2.1"
+getDynLibDir = getPrefixDirRel "x86_64-windows-ghc-8.4.3"
 
 getDataDir :: IO FilePath
-getDataDir =  catchIO (getEnv "gloss_counter_datadir") (\_ -> getPrefixDirRel "x86_64-windows-ghc-8.2.1\\gloss-counter-0.1.0.0")
+getDataDir =  catchIO (getEnv "gloss_counter_datadir") (\_ -> getPrefixDirRel "x86_64-windows-ghc-8.4.3\\gloss-counter-0.1.0.0")
 
 getLibexecDir :: IO FilePath
-getLibexecDir = getPrefixDirRel "gloss-counter-0.1.0.0-8CACllsMzzC4pB1ddLt1JX-gloss-counter\\x86_64-windows-ghc-8.2.1\\gloss-counter-0.1.0.0"
+getLibexecDir = getPrefixDirRel "gloss-counter-0.1.0.0-7ToAShSPflw5JlFpceer1k-gloss-counter\\x86_64-windows-ghc-8.4.3\\gloss-counter-0.1.0.0"
 
 getSysconfDir :: IO FilePath
 getSysconfDir = getPrefixDirRel "etc"
