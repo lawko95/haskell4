@@ -9,7 +9,7 @@ import System.Random
 data InfoToShow = ShowWorld (Float, Float) | ShowVictory | ShowPause
 
 instance Eq InfoToShow where 
-  ShowWorld (x, y) == (ShowWorld (a, b)) = x == a && y == b
+  ShowWorld (x, y) == (ShowWorld (a, b)) = True --x == a && y == b   volgens mij zijn showworlds gewoon gelijk aan elkaar toch?
   ShowVictory == ShowVictory = True
   ShowPause == ShowPause = True
   _ == _ = False
